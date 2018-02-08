@@ -1,0 +1,131 @@
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="/static/style-main.css">
+    <script type="text/javascript" src="/static/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="/static/record-tagger.js"></script>
+    <title>RecoTa - Record Tagging System</title>
+</head>
+<body class="primary-text-color default-primary-color">
+
+<h1 class="text-primary-color">Tag Admin
+    <span class="h1-hint primary-text-color">Found: <span id="totalTags"></span>.</span>
+</h1>
+<div id="tag-list" class="tag-list"></div>
+
+<h1 class="text-primary-color">Add New Tag
+    <span class="h1-hint primary-text-color">Enter tag value into the input field then click on the button to add new tag.</span>
+</h1>
+<div class="add-tag">
+    <input id="add-new-tag-value" type="text">
+    <button id="add-new-tag-button">add new tag</button>
+</div>
+
+<h1 class="text-primary-color">Update Tag
+    <span class="h1-hint primary-text-color">Select tag value from the drop down list, enter the new tag value into the input field then click on the
+        button to update tag.</span>
+</h1>
+<div class="update-tag">
+    <select id="update-tag-value">
+        <option>chose a tag...</option>
+    </select>
+    <input id="update-tag-new-value" type="text">
+    <button id="update-tag-button">update tag</button>
+</div>
+
+<h1 class="text-primary-color">Delete Tag
+    <span class="h1-hint primary-text-color">Select tag value from the drop down list then click on the button to delete tag.<</span>
+</h1>
+<div class="delete-tag">
+    <select id="delete-tag-value">
+        <option>chose a tag...</option>
+    </select>
+    <button id="delete-tag-button">delete tag</button>
+</div>
+
+<script type="text/javascript">
+
+        $(document).ready(function(){
+
+            var tagger = new RecordTagger();
+
+            function displayAlert(status, error) {
+                var message = 'Error: status: ' + status + ', error: ' + error;
+                console.log(message);
+                alert(message);
+            }
+
+            function refreshPageContent(tags) {
+                console.log(tags);
+
+                //update total hits
+                $('#totalTags').text(tags.total);
+
+                var tagList = $('#tag-list');
+                var deleteTagDropDown = $("#delete-tag-value");
+                var updateTagDropDown = $("#update-tag-value");
+
+                //refresh tags section content
+                tagList.empty();
+                deleteTagDropDown.empty();
+                updateTagDropDown.empty();
+
+                for (const tag of tags.tags) {
+                    tagList
+                        .append("<div id='tag" + tag.id + "' class='tag-list-item'>" + tag.tag + "</div>");
+                    deleteTagDropDown
+                        .append($("<option />").val(tag.id).text(tag.tag));
+                    updateTagDropDown
+                        .append($("<option />").val(tag.id).text(tag.tag));
+                }
+            }
+
+            function refreshContent() {
+                tagger.readTags('/tags',
+                    function(tags) {
+                        refreshPageContent(tags);
+                    },
+                    function(status, error) {
+                        displayAlert(status, error);
+                    }
+                );
+            }
+            refreshContent();
+
+            $('#add-new-tag-button').click(function() {
+                var tagValue = $('#add-new-tag-value').val();
+                tagger.createTag(tagValue,
+                    function(data) {
+                        refreshContent();
+                    },
+                    function(status, error) {
+                        displayAlert(status, error);
+                    }
+                );
+            });
+            $('#update-tag-button').click(function() {
+                var tagId = $('#update-tag-value').find(":selected").val();
+                var newTagValue = $('#update-tag-new-value').val();
+                tagger.updateTag(tagId, newTagValue,
+                    function(data) {
+                        refreshContent();
+                    },
+                    function(status, error) {
+                        displayAlert(status, error);
+                    }
+                );
+            });
+            $('#delete-tag-button').click(function() {
+                var tagId = $('#delete-tag-value').find(":selected").val();
+                tagger.deleteTag(tagId,
+                    function(data) {
+                        refreshContent();
+                    },
+                    function(status, error) {
+                        displayAlert(status, error);
+                    }
+                );
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+@import url("palette.css");
+
+
+.muted-white-background {
+    background-color: #FAFAFA;
+}
+
+body {
+}
+
+h1 {
+    font-size: 36px;
+    font-weight: 300;
+    float: left;
+    clear: both;
+}
+
+.hide {
+    display: none;
+}
+
+span.h1-hint {
+    font-size: 18px;
+}
+
+div.data-element {
+    float: left;
+    border-radius: 8px;
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+div.tag-list {
+    float: left;
+    clear: both;
+}
+
+div.tag-list-item {
+    float: left;
+    margin: 2pt;
+    border-radius: 6px;
+    padding-left: 6px;
+    padding-right: 6px;
+    font-size: 18px;
+    border: 1px solid;
+}
+
+div.record-list-table {
+    border-radius: 8px;
+    width: 100%;
+    float: left;
+    clear: both;
+}
+
+div.record-list-row {
+    padding: 8px;
+    clear: both;
+    float: left;
+    width: 100%;
+    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+    -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+    box-sizing: border-box;
+}
+
+div.record-list-row:hover {
+    background: var(--light-primary-color);
+}
+
+div.record-list-item {
+    float: left;
+    font-size: 24px;
+    clear: both;
+}
+
+button.record-list-item-edit, button.record-list-item-delete, button.record-list-item-translate {
+    float: left;
+    margin-left: 8px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+textarea.record-list-item-input {
+    float: left;
+    font-size: 24px;
+    clear: both;
+}
+
+div.record-list-item-tags {
+    float: left;
+    margin-top: 4px;
+    margin-bottom: 8px;
+    clear: both;
+}
+
+div.record-list-item-tag {
+    float: left;
+    padding-left: 4px;
+    padding-right: 4px;
+    font-size: 18px;
+    border: 1px solid;
+    border-radius: 8px;
+    margin: 2px;
+}
+
+div.active-tag {
+    background: var(--accent-color);
+}
+
+div.add-tag, div.update-tag, div.delete-tag {
+    float: left;
+    font-size: 24px;
+    clear: both;
+}
+
+input#add-new-tag-value, select#update-tag-value, button#add-new-tag-button, input#update-tag-new-value, button#update-tag-button, select#delete-tag-value, button#delete-tag-button {
+    font-size: 24px;
+}

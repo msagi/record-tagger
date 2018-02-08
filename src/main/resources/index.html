@@ -1,0 +1,212 @@
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="/static/style-main.css">
+    <script type="text/javascript" src="/static/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="/static/record-tagger.js"></script>
+    <title>RecoTa - Record Tagging System</title>
+</head>
+<body class="primary-text-color default-primary-color">
+
+<h1 class="text-primary-color">Tags
+    <span class="h1-hint primary-text-color">Found: <span id="totalTags"></span>. Click on the tags to select them for filtering.</span>
+    <span>
+        <button id="adminTags">admin</button>
+    </span>
+</h1>
+<div id="tag-list" class="tag-list"></div>
+
+<h1 class="text-primary-color">Records
+    <span class="h1-hint primary-text-color">Found: <span id="totalRecords"></span>.</span>
+    <span>
+        <button id="firstLink" class="hide">first</button>
+        <button id="prevLink" class="hide">prev</button>
+        <button id="nextLink" class="hide">next</button>
+        <button id="lastLink" class="hide">last</button>
+    </span>
+</h1>
+
+<div id="record-list" class="record-list-table muted-white-background"></div>
+
+<script type="text/javascript">
+
+        $(document).ready(function(){
+            $('#adminTags')
+                .off('click')
+                .on('click', function() {
+                    var url = "/static/tag-admin.html";
+                    var win = window.open(url, '_blank');
+                    win.focus();
+                });
+
+            var tagger = new RecordTagger();
+
+            function displayAlert(status, error) {
+                var message = 'Error: status: ' + status + ', error: ' + error;
+                console.log(message);
+                alert(message);
+            }
+
+            function refreshPageContent(records, tags) {
+                //update total hits
+                $('#totalRecords').text(records.total);
+                $('#totalTags').text(tags.total);
+
+                //update paging links
+                var halLinks = records._links;
+                if (halLinks.prev) {
+                    $('#firstLink').off('click').on('click', function(){ refreshRecords(halLinks.first.href); });
+                    $('#firstLink').show();
+                } else {
+                    $('#firstLink').hide();
+                }
+                if (halLinks.prev) {
+                    $('#prevLink').off('click').on('click', function(){ refreshRecords(halLinks.prev.href); });
+                    $('#prevLink').show();
+                } else {
+                    $('#prevLink').hide();
+                }
+                if (halLinks.next) {
+                    $('#nextLink').off('click').on('click', function(){ refreshRecords(halLinks.next.href); });
+                    $('#nextLink').show();
+                } else {
+                    $('#nextLink').hide();
+                }
+                if (halLinks.next) {
+                    $('#lastLink').off('click').on('click', function(){ refreshRecords(halLinks.last.href); });
+                    $('#lastLink').show();
+                } else {
+                    $('#lastLink').hide();
+                }
+
+                //refresh tags section content
+                $('#tag-list').empty();
+                var selectedTagIds = tags.selected.map(tag => tag.id);
+                for (const tag of tags.tags) {
+                    var isSelected = selectedTagIds.includes(tag.id);
+                    $('#tag-list').append("<div id='tag" + tag.id + "' class='tag-list-item" + (isSelected ? " active-tag"
+                    :"") + "'>" + tag.tag + "</div>");
+                    $('#tag' + tag.id).off('click').on('click', function(){ refreshRecords(tag._links.records.href); });
+                }
+
+                //refresh records section content
+                $('#record-list').empty()
+                for (const record of records._embedded.records) {
+
+                    $('#record-list')
+                        .append("<div id='record-" + record.id + "' class='record-list-row'>" +
+                        "<div id='record-" + record.id + "-value' class='record-list-item'>" + record.record + "</div>" +
+                        "<div id='record-" + record.id + "-input' class='record-list-item-edit' style='display: none;'>" +
+                          "<textarea id='record-" + record.id + "-input-field' class='record-list-item-input' rows='3' cols='200'>" + record.record +
+                          "</textarea>" +
+                        "</div>" +
+                        "<button id='record-" + record.id + "-edit' class='record-list-item-edit'>edit</button>" +
+                        "<button id='record-" + record.id + "-delete' class='record-list-item-delete'>delete</button>" +
+                        "<button id='record-" + record.id + "-translate' class='record-list-item-delete'>translate</button>" +
+                        "<div id='record-" + record.id + "-tags' class='record-list-item-tags' style='display: none;'/>" +
+                        "</div>"
+                    );
+                    $('#record-' + record.id)
+                        .off('click')
+                        .on('click', function(e) {
+                            $('#record-' + record.id + '-tags').toggle();
+                        });
+                    $('#record-' + record.id + '-edit')
+                        .off('click')
+                        .on('click', function(e) {
+                            if ($('#record-' + record.id + '-value').is(':hidden')) {
+                                var newRecordValue = $('#record-' + record.id + '-input-field').val();
+                                tagger.updateRecord(record.id, newRecordValue,
+                                    function(data) {
+                                        $('#record-' + record.id + '-input').hide();
+                                        $('#record-' + record.id + '-value').text(newRecordValue);
+                                        $('#record-' + record.id + '-value').show();
+                                        $('#record-' + record.id + '-edit').html('edit');
+                                    },
+                                    function(status, error) {
+                                        displayAlert(status, error);
+                                    }
+                                );
+                            } else {
+                                $('#record-' + record.id + '-value').hide();
+                                $('#record-' + record.id + '-input').show();
+                                $('#record-' + record.id + '-edit').html('save');
+                            }
+                        });
+                    $('#record-' + record.id + '-delete')
+                        .off('click')
+                        .on('click', function(e) {
+                            tagger.deleteRecord(record.id,
+                                function(data) {
+                                    $('#record-' + record.id).hide();
+                                },
+                                function(status, error) {
+                                    displayAlert(status, error);
+                                }
+                            );
+                        });
+                    $('#record-' + record.id + '-translate')
+                        .off('click')
+                        .on('click', function(e) {
+                            var recordData = $('#record-' + record.id + '-value').text();
+                            var url = "https://translate.google.com/?sl=auto&tl=en#auto/en/" + encodeURIComponent(recordData);
+                            var win = window.open(url, '_blank');
+                            win.focus();
+                        });
+
+                    var recordTagIds = record.tags.map(tag => tag.id);
+                    for (const tag of tags.tags) {
+                        var isSelected = recordTagIds.includes(tag.id);
+                        var tagDivId = "record-" + record.id + "tag" + tag.id;
+                        $('#record-' + record.id + '-tags')
+                            .append("<div id='" + tagDivId + "' class='record-list-item-tag" + (isSelected ? " active-tag" : "") + "'>" + tag.tag + "</div>");
+                        $('#' + tagDivId).off('click');
+                        if (isSelected) {
+                            $('#' + tagDivId).on('click', function(e) {
+                                tagger.untag(record.id, tag.id,
+                                    function (result) {
+                                        refreshRecords(halLinks.self.href);
+                                    },
+                                    function(status, error) {
+                                        displayAlert(status, error);
+                                    }
+                                )
+                            });
+                        } else {
+                            $('#' + tagDivId).on('click', function(e) {
+                                tagger.tag(record.id, tag.id,
+                                    function (result) {
+                                        refreshRecords(halLinks.self.href);
+                                    },
+                                    function(status, error) {
+                                        displayAlert(status, error);
+                                    }
+                                );
+                            });
+                        }
+                    }
+                }
+            }
+
+            function refreshRecords(link = '/records') {
+                tagger.readRecords(link,
+                    function(records) {
+                        tagger.readTags(records._links.tags.href,
+                            function(tags) {
+                                refreshPageContent(records, tags);
+                            },
+                            function(status, error) {
+                                displayAlert(status, error);
+                            }
+                        );
+                    },
+                    function(status, error) {
+                        displayAlert(status, error);
+                    }
+                );
+            }
+
+            refreshRecords();
+        });
+    </script>
+</body>
+</html>
