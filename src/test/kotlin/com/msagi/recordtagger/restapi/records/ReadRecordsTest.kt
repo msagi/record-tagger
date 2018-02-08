@@ -6,7 +6,6 @@ import com.msagi.recordtagger.restapi.RestApiTest
 import io.restassured.http.ContentType
 import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.Matchers.hasSize
-import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
@@ -20,9 +19,7 @@ class ReadRecordsTest : RestApiTest() {
         super.before()
 
         //create 2 tags, 10 records and tag even records with the first, odd records with the second tag
-        for (i in 0 until 2) {
-            tags.add(repository.addTag("tagValue$i"))
-        }
+        (0 until 2).mapTo(tags) { repository.addTag("tagValue$it") }
         for (i in 0 until 10) {
             val record = repository.addRecord("recordValue$i")
             records.add(record)

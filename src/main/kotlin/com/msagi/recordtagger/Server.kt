@@ -19,8 +19,10 @@ package com.msagi.recordtagger
 import com.github.salomonbrys.kodein.*
 import com.msagi.recordtagger.repository.Repository
 import com.msagi.recordtagger.repository.sql.SqlRepository
+import com.msagi.recordtagger.restapi.records.KEY_RECORDS_PAGE_SIZE
 import com.msagi.recordtagger.restapi.records.RecordsRestApi
 import com.msagi.recordtagger.restapi.tags.TagsRestApi
+import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.content.resource
@@ -36,9 +38,10 @@ import io.ktor.response.respondRedirect
 import io.ktor.routing.Routing
 import io.ktor.routing.get
 import io.ktor.routing.routing
+import io.ktor.server.engine.ApplicationEngine
 import io.ktor.server.engine.embeddedServer
+import io.ktor.server.jetty.Jetty
 import io.ktor.server.netty.Netty
-import io.ktor.server.netty.NettyApplicationEngine
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.text.DateFormat
@@ -48,11 +51,22 @@ interface RequestHandler {
     fun getHandler(): Routing.() -> Unit
 }
 
-class Server constructor (di: Kodein? = null) : KodeinAware {
+const val KEY_DEBUG = "debug"
+const val KEY_SERVER_ENGINE = "engine"
+const val KEY_SERVER_PORT = "port"
+
+enum class ServerEngine {
+    Netty,
+    Jetty
+}
+
+class Server constructor(di: Kodein? = null) : KodeinAware {
 
     override val kodein = di ?: Kodein {
 
-        constant("debug") with false
+        constant(KEY_DEBUG) with false
+
+        bind<Logger>() with multiton { cls: Class<*> -> LoggerFactory.getLogger(cls) }
 
         bind<Repository>() with singleton {
             SqlRepository(
@@ -63,66 +77,64 @@ class Server constructor (di: Kodein? = null) : KodeinAware {
             )
         }
 
-        bind<Logger>() with multiton { cls: Class<*> -> LoggerFactory.getLogger(cls) }
+        constant(KEY_SERVER_ENGINE) with ServerEngine.Netty
+        constant(KEY_SERVER_PORT) with 8080
 
-        constant("recordsPageSize") with 30
-
-        constant("serverPort") with 8080
+        constant(KEY_RECORDS_PAGE_SIZE) with 30
     }
 
     private val logger: Logger = kodein.withClassOf(this).instance()
 
-    private lateinit var server: NettyApplicationEngine
+    private lateinit var server: ApplicationEngine
 
-    fun start(wait: Boolean = true) {
+    private fun Application.module() {
+        val debug: Boolean = kodein.instance(KEY_DEBUG)
+
+        install(DefaultHeaders) {
+            header(HttpHeaders.Server, "RecoTa/1.0")
+        }
+        install(Compression)
+        install(ContentNegotiation) {
+            gson {
+                setDateFormat(DateFormat.LONG)
+                if (debug) { setPrettyPrinting() }
+                disableHtmlEscaping()
+            }
+        }
+        if (debug) {
+            install(CallLogging)
+        }
+        routing {
+            static("static") {
+                resources("css")
+                resources("js")
+                resource("index.html")
+                resource("tag-admin.html")
+            }
+            get("/") {
+                this.call.respondRedirect("/static/index.html")
+            }
+        }
+        routing(RecordsRestApi(kodein).getHandler())
+        routing(TagsRestApi(kodein).getHandler())
+    }
+
+    fun start() {
         logger.info("Initializing repository...")
-        val debug: Boolean = kodein.instance("debug")
 
         val repository: Repository = kodein.instance()
         repository.initialize()
 
-        val routingRules = arrayListOf(
-                RecordsRestApi(kodein),
-                TagsRestApi(kodein)
-        )
+        val engine: ServerEngine = kodein.instance(KEY_SERVER_ENGINE)
+        logger.info("Starting Server Engine ($engine)...")
 
-        logger.info("Starting WebServer...")
+        val port: Int = kodein.instance(KEY_SERVER_PORT)
 
-        val serverPort: Int = kodein.instance("serverPort")
-        server = embeddedServer(Netty, serverPort) {
-            install(DefaultHeaders) {
-                header(HttpHeaders.Server, "RecoTa")
-            }
-            install(Compression)
-            if (debug) {
-                install(CallLogging)
-            }
-            install(ContentNegotiation) {
-                gson {
-                    setDateFormat(DateFormat.LONG)
-                    if (debug) {
-                        setPrettyPrinting()
-                    }
-                    disableHtmlEscaping()
-                }
-            }
-            routing {
-                static("static") {
-                    resources("css")
-                    resources("js")
-                    resource("index.html")
-                    resource("tag-admin.html")
-                }
-                get("/") {
-                    this.call.respondRedirect("/static/index.html")
-                }
-            }
-            routingRules.forEach {
-                routing(it.getHandler())
-            }
+        server = when (engine) {
+            ServerEngine.Netty -> embeddedServer(Netty, port) { module() }
+            ServerEngine.Jetty -> embeddedServer(Jetty, port) { module() }
         }
-
-        server.start(wait)
+        server.start()
     }
 
     fun stop() {

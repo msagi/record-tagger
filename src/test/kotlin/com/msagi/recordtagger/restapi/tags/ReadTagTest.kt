@@ -15,7 +15,7 @@ class ReadTagTest : RestApiTest() {
     override fun before() {
         super.before()
 
-        for (i in 0 until 10) tags.add(repository.addTag("tagValue$i"))
+        (0 until 10).mapTo(tags) { repository.addTag("tagValue$it") }
     }
 
     @Test

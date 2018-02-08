@@ -19,7 +19,6 @@ package com.msagi.recordtagger.restapi.records
 import com.github.salomonbrys.kodein.Kodein
 import com.github.salomonbrys.kodein.instance
 import com.github.salomonbrys.kodein.withClassOf
-import com.msagi.recordtagger.RequestHandler
 import com.msagi.recordtagger.repository.Repository
 import com.msagi.recordtagger.repository.Tag
 import com.msagi.recordtagger.restapi.HalEmbedded
@@ -29,13 +28,16 @@ import com.msagi.recordtagger.restapi.HalLinks
 import com.msagi.recordtagger.restapi.records.hal.HalRecords
 import com.msagi.recordtagger.restapi.records.hal.toHalRecord
 import com.msagi.recordtagger.restapi.records.hal.toHalRecords
+import com.msagi.recordtagger.RequestHandler
 import io.ktor.application.call
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.Parameters
 import io.ktor.request.receiveOrNull
 import io.ktor.response.respond
 import io.ktor.routing.*
-import io.ktor.util.ValuesMap
 import org.slf4j.Logger
+
+const val KEY_RECORDS_PAGE_SIZE = "recordsPageSize"
 
 const val KEY_RECORD_ID = "recordId"
 const val KEY_TAG_ID = "tagId"
@@ -47,7 +49,7 @@ const val KEY_RECORD = "record"
  */
 class RecordsRestApi(kodein: Kodein) : RequestHandler {
 
-    private val maxLimit: Int = kodein.instance("recordsPageSize")
+    private val maxLimit: Int = kodein.instance(KEY_RECORDS_PAGE_SIZE)
 
     private val repository: Repository = kodein.instance()
 
@@ -81,7 +83,7 @@ class RecordsRestApi(kodein: Kodein) : RequestHandler {
         post("/records") {
             //create new record
             try {
-                val post = call.receiveOrNull<ValuesMap>()
+                val post = call.receiveOrNull<Parameters>()
                 val recordValue: String? = post?.get(KEY_RECORD)
                 if (recordValue == null) {
                     call.respond(HttpStatusCode.BadRequest)
@@ -117,7 +119,7 @@ class RecordsRestApi(kodein: Kodein) : RequestHandler {
             // update record by its ID
             val id: Int? = call.parameters[KEY_RECORD_ID]?.toIntOrNull()
             try {
-                val post = call.receiveOrNull<ValuesMap>()
+                val post = call.receiveOrNull<Parameters>()
                 val data: String? = post?.get(KEY_RECORD)
                 if (id != null && data != null) {
                     repository.setRecord(id, data).let {

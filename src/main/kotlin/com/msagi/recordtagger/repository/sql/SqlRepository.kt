@@ -79,11 +79,11 @@ class SqlRepository constructor(driver: String, connectString: String, dbUser: S
         return record
     }
 
-    override fun setRecord(recordId: Int, recordValue: String): Record {
+    override fun setRecord(recordId: Int, newRecordValue: String): Record {
         lateinit var record: Record
         transaction {
             SqlRecords.update({ SqlRecords.id eq recordId }) {
-                it[SqlRecords.record] = recordValue
+                it[SqlRecords.record] = newRecordValue
             }
             record = getRecord(recordId) ?: throw IllegalArgumentException("record not found")
         }

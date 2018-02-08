@@ -31,10 +31,10 @@ import com.msagi.recordtagger.restapi.tags.hal.HalTag
 import com.msagi.recordtagger.restapi.tags.hal.toHalTag
 import io.ktor.application.call
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.Parameters
 import io.ktor.request.receiveOrNull
 import io.ktor.response.respond
 import io.ktor.routing.*
-import io.ktor.util.ValuesMap
 import org.slf4j.Logger
 
 /**
@@ -82,7 +82,7 @@ class TagsRestApi(kodein: Kodein) : RequestHandler {
         post("/tags") {
             //Create new tag
             try {
-                val post = call.receiveOrNull<ValuesMap>()
+                val post = call.receiveOrNull<Parameters>()
                 val tagValue: String? = post?.get(KEY_TAG)
                 if (tagValue == null) {
                     call.respond(HttpStatusCode.BadRequest)
@@ -118,7 +118,7 @@ class TagsRestApi(kodein: Kodein) : RequestHandler {
             //Update existing tag
             val id = call.parameters[KEY_TAG_ID]?.toIntOrNull()
             try {
-                val post = call.receiveOrNull<ValuesMap>()
+                val post = call.receiveOrNull<Parameters>()
                 val tagValue: String? = post?.get("tag")
                 if (id == null || tagValue == null) {
                     call.respond(HttpStatusCode.BadRequest)

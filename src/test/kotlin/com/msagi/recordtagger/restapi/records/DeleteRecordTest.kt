@@ -13,7 +13,7 @@ class DeleteRecordTest : RestApiTest() {
     override fun before() {
         super.before()
 
-        for (i in 0 until 10) records.add(repository.addRecord("recordValue$i"))
+        (0 until 10).mapTo(records) { repository.addRecord("recordValue$it") }
     }
 
     @Test

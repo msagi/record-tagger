@@ -1,22 +1,22 @@
 ## Records API
-* [Create record](#markdown-header-create-record)
-* [Read record by ID](#markdown-header-read-record-by-id)
-* [Read all records filtered by tags and paginated](#markdown-header-read-all-records-filtered-by-tags-and-paginated)
-* [Update record by ID](#markdown-header-update-record-by-id)
-* [Delete record by ID](#markdown-header-delete-record-by-id)
+* [Create record](#create-record)
+* [Read record by ID](#read-record-by-id)
+* [Read all records filtered by tags and paginated](#read-all-records-filtered-by-tags-and-paginated)
+* [Update record by ID](#update-record-by-id)
+* [Delete record by ID](#delete-record-by-id)
 
 ## Tags API
 
-* [Create tag](#markdown-header-create-tag)
-* [Read tag by ID](#markdown-header-read-tag-by-id)
-* [Read all tags with some tags selected](#markdown-header-read-all-tags-with-some-tags-selected)
-* [Update tag by ID](#markdown-header-update-tag-by-id)
-* [Delete tag by ID](#markdown-header-delete-tag-by-id)
+* [Create tag](#create-tag)
+* [Read tag by ID](#read-tag-by-id)
+* [Read all tags with some tags selected](#read-all-tags-with-some-tags-selected)
+* [Update tag by ID](#update-tag-by-id)
+* [Delete tag by ID](#delete-tag-by-id)
 
 ## Tagging API
 
-* [Tag a record](#markdown-header-tag-a-record)
-* [Untag a record](#markdown-header-untag-a-record)
+* [Tag a record](#tag-a-record)
+* [Untag a record](#untag-a-record)
 
 # Create record
 ----
@@ -395,7 +395,7 @@
 
 # Delete record by ID
 ----
-  _Delete existing reocrd in the repository by ID._
+  _Delete existing record in the repository by ID._
 
 * **URL:** `/records/{id}`
 
@@ -1005,7 +1005,7 @@
 * **Sample Call:**
 
 ```javascript
-    untag(recordId, tagId, callback, errorCallbac) {
+    untag(recordId, tagId, callback, errorCallback) {
         $.ajax({
             url: '/records/' + recordId + '/tags/' + tagId,
             type: 'DELETE',

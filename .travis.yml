@@ -1,0 +1,16 @@
+language : java
+jdk:
+- oraclejdk8
+service:
+  - mysql
+before_script:
+  - chmod +x gradlew
+  - mysql -u root -e 'DROP DATABASE IF EXISTS recordtaggertest;'
+  - mysql -u root -e 'CREATE DATABASE IF NOT EXISTS recordtaggertest;'
+  - mysql -u root -e "CREATE USER 'recota'@'localhost' IDENTIFIED BY 'recota';"
+  - mysql -u root -e "GRANT ALL ON recordtaggertest.* TO 'recota'@'localhost';"
+script:
+  - ./gradlew check
+after_success:
+  - ./gradlew jacocoTestReport
+  - bash <(curl -s https://codecov.io/bash)

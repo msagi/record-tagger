@@ -173,7 +173,7 @@ class RecordTagger {
        });
     }
 
-    untag(recordId, tagId, callback, errorCallbac) {
+    untag(recordId, tagId, callback, errorCallback) {
         $.ajax({
             url: '/records/' + recordId + '/tags/' + tagId,
             type: 'DELETE',
